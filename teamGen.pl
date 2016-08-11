@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
 
 # Perl script to generate random pokemon team from a given list
 
@@ -7,11 +7,15 @@ use File::Basename;
 use Getopt::Long;
 Getopt::Long::Configure ("bundling");
 
+# Constants
+my $TEAMSIZE = 10;
+
 # Usage variables
 my $cmd = basename($0);
 my $options = "\nOptions:\n".
+              "   -h, --help    Display this screen and exit\n".
               "   -d, --debug   Increase debug information and warning level\n";
-my $usage = "usage: $cmd [-d] <number-of-teams> <data-file>\n".$options;
+my $usage = "usage: $cmd [-hd] <number-of-teams> <data-file>\n".$options;
 
 # Option variables
 my $help = 0;
@@ -50,5 +54,32 @@ while(<FILE>){
   print "$line[0] => $line[1]\n" if $debug > 1;
 }
 close FILE;
+my $monNum = keys %mons;
+print "monNum: $monNum\n" if $debug;
+
+# Check for unique team composition
+my $unique = 1;
+if ($teamNum*$TEAMSIZE > $monNum) {
+  warn "Warning: Too many teams for unique compositions\n";
+  $unique = 0;
+}
+
+# Gen the teams
+my %teams;
+for(my $i = 1; $i <= $teamNum; $i++){
+  my @team;
+  for (1..$TEAMSIZE){
+    my $index;
+    until (exists $mons{$index}){
+      $index = int(rand($monNum));
+    }
+    push @team,$mons{$index};
+    delete $mons{$index} if $unique;
+  }
+  print "team: @team\n" if $debug;
+  $teams{$i}=[@team];
+}
+
+print "\nPlayer: $_ =>\nTeam: @{$teams{$_}}\n" foreach(sort{$a <=> $b}keys %teams);
 
 print "\nWe good.\n";
